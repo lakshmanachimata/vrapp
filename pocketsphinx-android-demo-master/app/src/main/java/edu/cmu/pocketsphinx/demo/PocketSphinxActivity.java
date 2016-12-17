@@ -152,7 +152,8 @@ public class PocketSphinxActivity extends Activity implements
         String text = hypothesis.getHypstr();
         if (text.startsWith(KEYPHRASE)) {
             makeText(getApplicationContext(), "1" + text, Toast.LENGTH_SHORT).show();
-            recognizer.stop();
+            recognizer.cancel();
+            Rerecognise(keyPhraseTimeOut);
         }
 
     }
@@ -166,7 +167,6 @@ public class PocketSphinxActivity extends Activity implements
         if (hypothesis != null) {
             String text = hypothesis.getHypstr();
             makeText(getApplicationContext(), "2   " + text, Toast.LENGTH_SHORT).show();
-            Rerecognise(keyPhraseTimeOut);
         }
     }
 
@@ -206,7 +206,7 @@ public class PocketSphinxActivity extends Activity implements
         recognizer = SpeechRecognizerSetup.defaultSetup()
                 .setAcousticModel(new File(assetsDir, "en-us-ptm"))
                 .setDictionary(new File(assetsDir, "cmudict-en-us.dict"))
-                .setRawLogDir(assetsDir).setKeywordThreshold(1e-11f) // To disable logging of raw audio comment out this call (takes a lot of space on the device)
+                .setRawLogDir(assetsDir).setKeywordThreshold(1e-5f) // To disable logging of raw audio comment out this call (takes a lot of space on the device)
                 .getRecognizer();
         recognizer.addListener(this);
         // Create keyword-activation search.
