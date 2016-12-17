@@ -55,16 +55,16 @@ public class PocketSphinxActivity extends Activity implements
     /* Named searches allow to quickly reconfigure the decoder */
     private static final String KWS_SEARCH = "wakeup";
 
+    int keyPhraseTimeOut =  10000;
     /* Keyword we are looking for to activate menu */
-    private static final String KEYPHRASE = "hey woohoo";
+    private static final String KEYPHRASE = "woohoo";
 
-    /* Used to handle permission request */
-    private static final int PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
 
     private SpeechRecognizer recognizer;
     private HashMap<String, Integer> captions;
     Handler recognitionHandler =  new Handler();
-    Runnable recognitionRunnable ;
+    Handler toastHandler =  new Handler();
+    Runnable recognitionRunnable,toastRunnable;
 
     @Override
     public void onCreate(Bundle state) {
@@ -82,11 +82,18 @@ public class PocketSphinxActivity extends Activity implements
     }
 
     void Rerecognise(int time) {
-
+        toastRunnable =  new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(),"say hey woohoo again ",Toast.LENGTH_SHORT).show();
+            }
+        };
+        toastHandler.postDelayed(toastRunnable,time + 2000);
         recognitionRunnable = new Runnable() {
             @Override
             public void run() {
-                recognizer.
+                recognizer.addKeyphraseSearch(KWS_SEARCH, KEYPHRASE);
+                recognizer.startListening(KWS_SEARCH);
             }
         };
         recognitionHandler.postDelayed(recognitionRunnable,time);
@@ -143,10 +150,9 @@ public class PocketSphinxActivity extends Activity implements
             return;
 
         String text = hypothesis.getHypstr();
-        if (text.equals(KEYPHRASE)) {
-//            makeText(getApplicationContext(), "1" + text, Toast.LENGTH_SHORT).show();
+        if (text.startsWith(KEYPHRASE)) {
+            makeText(getApplicationContext(), "1" + text, Toast.LENGTH_SHORT).show();
             recognizer.stop();
-
         }
 
     }
@@ -159,7 +165,8 @@ public class PocketSphinxActivity extends Activity implements
         ((TextView) findViewById(R.id.result_text)).setText("");
         if (hypothesis != null) {
             String text = hypothesis.getHypstr();
-            makeText(getApplicationContext(), "2" + text, Toast.LENGTH_SHORT).show();
+            makeText(getApplicationContext(), "2   " + text, Toast.LENGTH_SHORT).show();
+            Rerecognise(keyPhraseTimeOut);
         }
     }
 
@@ -199,14 +206,9 @@ public class PocketSphinxActivity extends Activity implements
         recognizer = SpeechRecognizerSetup.defaultSetup()
                 .setAcousticModel(new File(assetsDir, "en-us-ptm"))
                 .setDictionary(new File(assetsDir, "cmudict-en-us.dict"))
-                .setRawLogDir(assetsDir) // To disable logging of raw audio comment out this call (takes a lot of space on the device)
+                .setRawLogDir(assetsDir).setKeywordThreshold(1e-11f) // To disable logging of raw audio comment out this call (takes a lot of space on the device)
                 .getRecognizer();
         recognizer.addListener(this);
-
-        /** In your application you might not need to add all those searches.
-         * They are added here for demonstration. You can leave just one.
-         */
-
         // Create keyword-activation search.
         recognizer.addKeyphraseSearch(KWS_SEARCH, KEYPHRASE);
     }
